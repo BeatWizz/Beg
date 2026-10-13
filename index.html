@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>СвятБег</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#101218">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  :root {
+    --accent: #c6ff00;
+    --accent2: #ff2d55;
+    --text: #f5f5f5;
+    --muted: #8d939c;
+    --card: rgba(14, 16, 20, 0.9);
+    --side: rgba(8, 9, 12, 0.96);
+    --line: rgba(255, 255, 255, 0.08);
+    --bg-overlay: 0.6;
+    --font: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    --fw: 400;
+    color-scheme: dark;
+  }
+  body.light {
+    background-color: #eef1f5;
+    --text: #111;
+    --muted: #5b6270;
+    --card: rgba(255, 255, 255, 0.94);
+    --side: rgba(245, 246, 248, 0.97);
+    --line: rgba(0, 0, 0, 0.08);
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    font-weight: var(--fw);
+    color: var(--text);
+    background-color: #07080a;
+    background-image:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 22px),
+      radial-gradient(circle at 85% -10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 45%),
+      radial-gradient(circle at -10% 110%, color-mix(in srgb, var(--accent2) 18%, transparent), transparent 45%);
+    background-attachment: fixed;
+  }
+  body.has-photo { background: #111 center/cover fixed no-repeat; background-image: var(--photo); }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1;
+    background: rgba(0, 0, 0, var(--bg-overlay));
+  }
+  body.light::before { background: rgba(255, 255, 255, var(--bg-overlay)); }
+  .hidden { display: none !important; }
+
+  /* ----- Layout ----- */
+  .app { display: flex; min-height: 100vh; }
+
+  /* ----- Боковая колонка ----- */
+  aside {
+    width: 260px; flex-shrink: 0;
+    background: var(--side);
+    border-right: 3px solid var(--accent);
+    padding: 22px 14px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    box-shadow: 6px 0 30px rgba(0,0,0,0.4);
+  }
+  .logo {
+    font-family: "Impact", "Arial Black", sans-serif;
+    font-size: 30px; font-style: italic; text-transform: uppercase; letter-spacing: 1px;
+    margin: 0 4px 22px; color: var(--text);
+  }
+  .logo .mark {
+    background: var(--accent); color: #000;
+    padding: 2px 10px; transform: skewX(-12deg); display: inline-block;
+  }
+  .logo .mark span { display: inline-block; transform: skewX(12deg); }
+  .menu-btn {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; text-align: left;
+    font-family: "Impact", "Arial Black", sans-serif;
+    font-size: 15px; text-transform: uppercase; letter-spacing: .8px;
+    background: transparent; color: var(--text);
+    border: none; border-left: 4px solid transparent;
+    padding: 12px 14px; margin-bottom: 4px; cursor: pointer;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .menu-btn:hover { background: rgba(255,255,255,0.06); }
+  .menu-btn.active { background: var(--accent); color: #000; border-left-color: var(--accent2); }
+  .menu-btn .arrow { transition: transform .2s; font-size: 12px; }
+  .menu-btn.open .arrow { transform: rotate(180deg); }
+  .submenu { margin: 0 0 8px 14px; padding-left: 10px; border-left: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+  .sub-btn {
+    display: block; width: 100%; text-align: left;
+    font-family: inherit; font-size: 14px; font-weight: var(--fw);
+    background: transparent; color: var(--muted);
+    border: none; padding: 8px 10px; margin: 2px 0; cursor: pointer; border-radius: 4px;
+  }
+  .sub-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .sub-btn.active { color: #000; background: var(--accent); font-weight: 700; }
+
+  /* ----- Контент ----- */
+  main { flex: 1; min-width: 0; padding: 26px 30px; max-width: 1100px; }
+  .card {
+    position: relative; overflow: hidden;
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 20px; margin-bottom: 20px;
+    box-shadow: 0 12px 34px rgba(0,0,0,0.35);
+  }
+  .card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+  }
+  .page-title {
+    font-family: "Impact", "Arial Black", sans-serif;
+    font-size: 30px; font-style: italic; text-transform: uppercase; letter-spacing: 1px;
+    margin: 0 0 18px;
+  }
+  .page-title small { display: block; font-size: 13px; font-style: normal; color: var(--muted); letter-spacing: .5px; font-weight: var(--fw); }
+  .card h2 {
+    margin: 0 0 14px; padding-left: 4px;
+    font-family: "Impact", "Arial Black", sans-serif;
+    font-size: 20px; font-style: italic; text-transform: uppercase; letter-spacing: .8px;
+  }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  label {
+    display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--muted); margin-bottom: 6px; font-weight: 700;
+  }
+  input, select, textarea {
+    width: 100%; padding: 10px 11px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--line); border-radius: 4px;
+    color: var(--text); font-size: 15px; font-family: inherit; font-weight: var(--fw);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  body.light input, body.light select, body.light textarea { background: #fff; }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  select option { background: #15171c; color: #f5f5f5; }
+  body.light select option { background: #fff; color: #111; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 15px; text-transform: none; letter-spacing: 0; color: var(--text); cursor: pointer; }
+  .check input { width: auto; }
+
+  /* ----- Кнопки ----- */
+  .btn {
+    font-family: "Impact", "Arial Black", sans-serif;
+    font-size: 14px; text-transform: uppercase; letter-spacing: .8px;
+    background: transparent; color: var(--text);
+    border: 1px solid var(--line); border-radius: 4px;
+    padding: 10px 16px; cursor: pointer;
+    transition: transform .15s, background .2s, color .2s, border-color .2s;
+  }
+  .btn:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--accent); }
+  .btn.primary {
+    background: var(--accent); color: #000; border-color: var(--accent);
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); padding: 10px 26px;
+  }
+  .btn.primary:hover { color: #000; filter: brightness(1.08); }
+  .btn.danger { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 50%, transparent); }
+  .btn.danger:hover { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+  .btn.small { padding: 6px 10px; font-size: 12px; }
+
+  /* ----- Элементы списков ----- */
+  .day-title {
+    display: inline-block; margin: 18px 0 8px;
+    font-family: "Impact", "Arial Black", sans-serif;
+    font-size: 15px; text-transform: uppercase; letter-spacing: 1px;
+    background: var(--accent); color: #000; padding: 4px 14px; transform: skewX(-10deg);
+  }
+  .day-title span { display: inline-block; transform: skewX(10deg); }
+  .item {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 14px; margin-bottom: 8px;
+    background: rgba(255,255,255,0.04);
+    border-left: 4px solid var(--accent2); border-radius: 4px;
+    transition: transform .2s, background .2s;
+  }
+  .item:hover { transform: translateX(4px); background: rgba(255,255,255,0.07); }
+  .item.done { border-left-color: var(--accent); opacity: .6; }
+  .item.done .title { text-decoration: line-through; }
+  .item small { color: var(--muted); display: block; margin-top: 4px; }
+  .tag {
+    font-family: "Impact", "Arial Black", sans-serif; font-size: 12px; text-transform: uppercase;
+    background: var(--accent2); color: #fff; padding: 2px 8px; margin-right: 6px;
+  }
+  .pill {
+    display: inline-block; font-size: 13px; font-weight: 700;
+    color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    padding: 1px 8px; border-radius: 3px; margin: 2px 4px 2px 0;
+  }
+  .pill.hr { color: var(--accent2); border-color: color-mix(in srgb, var(--accent2) 55%, transparent); }
+  .pill.cad { color: #00e5ff; border-color: color-mix(in srgb, #00e5ff 50%, transparent); }
+  .pill.vo2 { color: #ffd60a; border-color: color-mix(in srgb, #ffd60a 50%, transparent); }
+
+  /* ----- Таблица ----- */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 9px 8px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+  td.hr { color: var(--accent2); font-weight: 700; }
+  td.cad { color: #00e5ff; font-weight: 700; }
+  td.vo2 { color: #ffd60a; font-weight: 700; }
+  td.pace { color: var(--accent); font-weight: 700; }
+
+  /* ----- Статистика и графики ----- */
+  .stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .stat-box {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--line);
+    border-radius: 6px; padding: 14px; position: relative; overflow: hidden;
+  }
+  .stat-box .k { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+  .stat-box .v {
+    font-family: "Impact", "Arial Black", sans-serif; font-size: 28px; margin-top: 4px; color: var(--accent);
+  }
+  .stat-box .v.hr { color: var(--accent2); }
+  .stat-box .v.cad { color: #00e5ff; }
+  .stat-box .v.vo2 { color: #ffd60a; }
+  .charts { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .chart-title { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; font-weight: 700; }
+  .chart-wrap { display: flex; gap: 8px; align-items: flex-end; height: 160px; padding-top: 20px; }
+  .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
+  .col .val { font-size: 11px; margin-bottom: 4px; white-space: nowrap; }
+  .col .bar {
+    width: 100%; max-width: 40px; border-radius: 3px 3px 0 0; min-height: 6px;
+    background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 30%, transparent));
+  }
+  .col .bar.hr { background: linear-gradient(180deg, var(--accent2), color-mix(in srgb, var(--accent2) 30%, transparent)); }
+  .col .bar.cad { background: linear-gradient(180deg, #00e5ff, color-mix(in srgb, #00e5ff 30%, transparent)); }
+  .col .bar.vo2 { background: linear-gradient(180deg, #ffd60a, color-mix(in srgb, #ffd60a 30%, transparent)); }
+  .col small { font-size: 10px; color: var(--muted); margin-top: 6px; white-space: nowrap; }
+  .legend { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  /* ----- Баннер ----- */
+  .banner {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #000; font-family: "Impact", "Arial Black", sans-serif;
+    font-size: 16px; text-transform: uppercase; letter-spacing: .6px;
+    padding: 14px 22px; box-shadow: 0 8px 30px rgba(0,0,0,.5);
+    display: none; z-index: 99; max-width: 92%; text-align: center;
+  }
+
+  /* ----- Цвета акцента ----- */
+  .swatch { width: 36px; height: 36px; border-radius: 4px; cursor: pointer; border: 2px solid rgba(255,255,255,.2); transition: transform .15s; }
+  .swatch:hover { transform: scale(1.1); }
+  .swatch.on { outline: 3px solid #888; outline-offset: 2px; }
+
+  /* ----- Мобильная версия ----- */
+  @media (max-width: 760px) {
+    .app { flex-direction: column; }
+    aside { width: 100%; height: auto; position: static; border-right: none; border-bottom: 3px solid var(--accent); padding: 14px; }
+    .logo { font-size: 24px; margin-bottom: 12px; }
+    main { padding: 18px 14px; }
+    .page-title { font-size: 24px; }
+  }
+
+.mobile-top {display:none}
+aside {display:flex; flex-direction:column}
+aside > [data-view="settings"] {margin-top:auto}
+@media(max-width:760px){
+ .mobile-top {display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--side);position:sticky;top:0;z-index:20;font-weight:700}
+ aside {position:fixed;left:0;top:0;bottom:0;height:100dvh;width:280px;z-index:30;transform:translateX(-105%);transition:transform .2s;padding-top:24px}
+ body.menu-open aside {transform:translateX(0)}
+ main {width:100%;padding-bottom: max(24px,env(safe-area-inset-bottom))}
+ .charts {grid-template-columns:minmax(0,1fr)}
+ input,select,textarea {font-size:16px}
+ .btn {min-height:44px}
+}
+</style>
+</head>
+<body>
+
+<div class="mobile-top"><span>🏃 СвятБег</span><button class="btn" id="mobile-menu">☰ Меню</button></div>
+<div class="app">
+  <aside>
+    <div class="logo"><span class="mark"><span>СВЯТ</span></span> БЕГ</div>
+
+    <button class="menu-btn open" id="menu-coach">Тренировка от тренера <span class="arrow">▼</span></button>
+    <div class="submenu" id="coach-sub">
+      <button class="sub-btn" data-type="Лёгкая">Лёгкая</button>
+      <button class="sub-btn" data-type="Длительная">Длительная</button>
+      <button class="sub-btn" data-type="Интервальная">Интервальная</button>
+      <button class="sub-btn" data-type="Темповая">Темповая</button>
+      <button class="sub-btn" data-type="Фартлек">Фартлек</button>
+      <button class="sub-btn" data-type="Прогрессивная">Прогрессивная</button>
+      <button class="sub-btn" data-type="Восстановительная">Восстановительная</button>
+      <button class="sub-btn" data-type="Силовая">Силовая</button>
+      <button class="sub-btn" data-type="ОФП">ОФП</button>
+      <button class="sub-btn" data-type="Отдых">Отдых</button>
+    </div>
+
+    <button class="menu-btn" data-view="journal">Журнал</button>
+    <button class="menu-btn" data-view="progress">Прогресс</button>
+    <button class="menu-btn" data-view="settings">Настройки</button>
+  </aside>
+
+  <main>
+    <!-- ТРЕНИРОВКА ОТ ТРЕНЕРА -->
+    <section id="view-coach" class="hidden">
+      <div class="page-title" id="coach-title">Тренировка<small>Добавь тренировку от тренера на неделю</small></div>
+      <div class="card">
+        <h2>Новая тренировка</h2>
+        <div class="grid">
+          <div><label>День</label>
+            <select id="p-day">
+              <option value="0">Понедельник</option><option value="1">Вторник</option>
+              <option value="2">Среда</option><option value="3">Четверг</option>
+              <option value="4">Пятница</option><option value="5">Суббота</option>
+              <option value="6">Воскресенье</option>
+            </select></div>
+          <div><label>Дистанция, км</label><input id="p-dist" type="number" step="0.1" min="0"></div>
+          <div><label>Целевой темп, мин/км</label><input id="p-pace" placeholder="5:30"></div>
+          <div><label>Целевой пульс, уд/мин</label><input id="p-hr" placeholder="140–150"></div>
+          <div><label>Целевой каденс, шаг/мин</label><input id="p-cad" placeholder="170–175"></div>
+          <div><label>Напоминание</label><input id="p-remind" type="time"></div>
+        </div>
+        <div style="margin-top:12px"><label>Описание от тренера</label>
+          <textarea id="p-desc" rows="3" placeholder="Например: 6 × 400 м, темп 4:10, отдых 90 сек"></textarea></div>
+        <div class="row"><button class="btn primary" id="p-add">Добавить</button></div>
+      </div>
+      <div class="card" id="coach-list"></div>
+    </section>
+
+    <!-- ЖУРНАЛ -->
+    <section id="view-journal" class="hidden">
+      <div class="page-title">Журнал<small>Тренировки на текущую неделю</small></div>
+      <div class="card">
+        <h2>Итоги недели</h2>
+        <div class="stats" id="week-stats"></div>
+      </div>
+      <div class="card" id="journal-list"></div>
+      <div class="row"><button class="btn danger" id="p-clear">Очистить неделю</button></div>
+    </section>
+
+    <!-- ПРОГРЕСС -->
+    <section id="view-progress" class="hidden">
+      <div class="page-title">Прогресс<small>Все пробежки и показатели</small></div>
+      <div class="card">
+        <h2>Сводка</h2>
+        <div class="stats" id="prog-stats"></div>
+      </div>
+      <div class="card">
+        <h2>Графики</h2>
+        <div class="charts">
+          <div><div class="chart-title">Темп, мин/км (ниже = быстрее)</div><div class="chart-wrap" id="ch-pace"></div></div>
+          <div><div class="chart-title">Средний пульс</div><div class="chart-wrap" id="ch-hr"></div></div>
+          <div><div class="chart-title">Каденс, шаг/мин</div><div class="chart-wrap" id="ch-cad"></div></div>
+          <div><div class="chart-title">VO2, мл/кг/мин</div><div class="chart-wrap" id="ch-vo2"></div></div>
+        </div>
+        <div class="legend">Показаны последние 10 пробежек. Пустой столбик означает, что показатель не вносился.</div>
+      </div>
+      <div class="card">
+        <h2>Все пробежки</h2>
+<button class="btn primary" id="import-button">Импорт данных</button>
+<input id="import-file" type="file" accept=".tcx,.gpx,.json" multiple hidden>
+<p class="muted">TCX, GPX или резервная копия СвятБег JSON. FIT пока не поддерживается. VO₂max отображается только если он есть в файле; не рассчитывается из темпа.</p>
+<p id="import-status" role="status"></p>
+        <div class="table-wrap" id="runs-table"></div>
+      </div>
+    </section>
+
+    <!-- НАСТРОЙКИ -->
+    <section id="view-settings" class="hidden">
+      <div class="page-title">Настройки<small>Оформление и данные</small></div>
+      <div class="card">
+        <h2>Шрифт</h2>
+        <div class="grid">
+          <div><label>Начертание</label>
+            <select id="set-font">
+              <option value="Trebuchet MS, Segoe UI, system-ui, sans-serif">Спортивный (Trebuchet)</option>
+              <option value="Segoe UI, Roboto, system-ui, sans-serif">Современный (Segoe UI / Roboto)</option>
+              <option value="Arial, Helvetica, sans-serif">Классический (Arial)</option>
+              <option value="Georgia, 'Times New Roman', serif">С засечками (Georgia)</option>
+              <option value="Verdana, Geneva, sans-serif">Широкий (Verdana)</option>
+            </select></div>
+          <div><label>Толщина текста</label>
+            <label class="check"><input id="set-bold" type="checkbox"> Жирный текст</label></div>
+        </div>
+        <p class="muted" style="margin-top:12px">Заголовки и кнопки сохраняют спортивный стиль, меняется основной текст.</p>
+      </div>
+      <div class="card">
+        <h2>Тема</h2>
+        <div class="grid">
+          <div><label>Режим</label>
+            <select id="set-theme">
+              <option value="dark">Тёмная</option>
+              <option value="light">Светлая</option>
+              <option value="system">Как в телефоне (системная)</option>
+            </select></div>
+          <div><label>Затемнение фона: <span id="ov-val"></span></label>
+            <input id="set-overlay" type="range" min="0" max="0.9" step="0.05"></div>
+        </div>
+        <div style="margin-top:14px"><label>Цвет акцента</label>
+          <div class="row" id="swatches" style="margin-top:0"></div></div>
+        <div style="margin-top:14px"><label>Фон — ваше фото</label>
+          <input id="set-bg" type="file" accept="image/*"></div>
+        <div class="row"><button class="btn danger" id="bg-remove">Убрать фон</button></div>
+      </div>
+      <div class="card">
+        <h2>Установка на телефон</h2>
+<button class="btn primary" id="install-app">Установить СвятБег</button>
+<p class="muted">Android: открыть сайт в Chrome → «Установить приложение». iPhone: Safari → «Поделиться» → «На экран Домой». Требуется HTTPS-сайт, не локальный HTML-файл.</p>
+</div><div class="card"><h2>Напоминания</h2>
+        <p class="muted">Напоминания появляются в назначенное время, пока приложение открыто и активно. В этой версии нет фоновых напоминаний. Разреши уведомления в браузере.</p>
+        <button class="btn primary" id="notif-perm">Разрешить уведомления</button>
+      </div>
+      <div class="card">
+        <h2>Данные</h2>
+        <div class="row">
+          <button class="btn" id="export">Экспорт в файл</button>
+          <button class="btn danger" id="reset-all">Удалить все данные</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="banner" id="banner"></div>
+
+<script>
+const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"];
+const ACCENTS = ["#c6ff00","#ff2d55","#00e5ff","#ff6b00","#ffd60a","#b388ff"];
+const DEFAULT_FONT = "Trebuchet MS, Segoe UI, system-ui, sans-serif";
+
+const store = {
+  get(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } },
+  set(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+};
+// plan: {id, day, type, dist, pace, hr, cad, remind, desc, done, notified}
+// runs: {id, date, dist, time(сек), hr, hrMax, cad, vo2, note}
+let plan = store.get("plan", []);
+let runs = store.get("runs", []);
+let settings = Object.assign(
+  { theme: "dark", accent: "#c6ff00", overlay: 0.6, bg: null, font: DEFAULT_FONT, bold: false },
+  store.get("settings", {})
+);
+let currentType = "Лёгкая";
+
+const $ = id => document.getElementById(id);
+const uid = () => Date.now() + Math.random().toString(36).slice(2, 7);
+const pad = n => String(n).padStart(2, "0");
+const localDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const numOrNull = v => (v === "" || v == null) ? null : +v;
+const avg = arr => arr.reduce((s, x) => s + x, 0) / arr.length;
+
+// ---------- Навигация ----------
+function showView(name) {
+  ["coach","journal","progress","settings"].forEach(v => $("view-" + v).classList.toggle("hidden", v !== name));
+  document.querySelectorAll(".menu-btn[data-view]").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+  $("menu-coach").classList.toggle("active", name === "coach");
+  if (name === "journal") renderJournal();
+  if (name === "progress") renderProgress();
+}
+function showCoach(type) {
+  currentType = type;
+  showView("coach");
+  $("coach-title").innerHTML = `${esc(type)}<small>Тренировки от тренера на неделю</small>`;
+  document.querySelectorAll(".sub-btn").forEach(b => b.classList.toggle("active", b.dataset.type === type));
+  renderCoach();
+}
+$("menu-coach").onclick = () => {
+  const sub = $("coach-sub");
+  sub.classList.toggle("hidden");
+  $("menu-coach").classList.toggle("open", !sub.classList.contains("hidden"));
+  showCoach(currentType);
+};
+document.querySelectorAll(".sub-btn").forEach(b => b.onclick = () => showCoach(b.dataset.type));
+document.querySelectorAll(".menu-btn[data-view]").forEach(b => b.onclick = () => showView(b.dataset.view));
+
+// ---------- Тренировка от тренера ----------
+function planItem(p) {
+  return `<div class="item ${p.done ? "done" : ""}">
+    <div class="title"><span class="tag">${esc(p.type)}</span> <b>${DAYS[+p.day]}</b>
+      ${p.dist ? `<span class="pill">${esc(p.dist)} км</span>` : ""}
+      ${p.pace ? `<span class="pill">темп ${esc(p.pace)}</span>` : ""}
+      ${p.hr ? `<span class="pill hr">пульс ${esc(p.hr)}</span>` : ""}
+      ${p.cad ? `<span class="pill cad">каденс ${esc(p.cad)}</span>` : ""}
+      ${p.remind ? `<span class="pill">⏰ ${esc(p.remind)}</span>` : ""}
+      ${p.desc ? `<small>${esc(p.desc)}</small>` : ""}
+    </div>
+    <div class="row" style="margin:0">
+      <button class="btn small" onclick="toggleDone('${p.id}')">${p.done ? "Отменить" : "Готово ✓"}</button>
+      <button class="btn small danger" onclick="delPlan('${p.id}')">✕</button>
+    </div></div>`;
+}
+function sortPlan(arr) {
+  return arr.sort((a, b) => (+a.day - +b.day) || (a.remind || "").localeCompare(b.remind || ""));
+}
+function renderCoach() {
+  const items = sortPlan(plan.filter(p => p.type === currentType));
+  let html = `<h2>${esc(currentType)} на неделе</h2>`;
+  html += items.length ? items.map(planItem).join("") : `<p class="muted">Тренировок этого типа пока нет.</p>`;
+  $("coach-list").innerHTML = html;
+}
+$("p-add").onclick = () => {
+  plan.push({
+    id: uid(), day: +$("p-day").value, type: currentType,
+    dist: $("p-dist").value, pace: $("p-pace").value.trim(), hr: $("p-hr").value.trim(),
+    cad: $("p-cad").value.trim(), remind: $("p-remind").value, desc: $("p-desc").value.trim(),
+    done: false, notified: ""
+  });
+  store.set("plan", plan);
+  ["p-dist","p-pace","p-hr","p-cad","p-remind","p-desc"].forEach(id => $(id).value = "");
+  renderCoach();
+};
+window.toggleDone = id => {
+  const p = plan.find(x => x.id === id);
+  if (!p) return;
+  if (!p.done) {
+    // Отмечаем выполненной: спрашиваем фактические результаты и пишем в прогресс
+    const dist = parseFloat(prompt(`Фактическая дистанция, км (план: ${p.dist || "—"}):`, p.dist || ""));
+    if (isNaN(dist) || dist <= 0) return alert("Нужна дистанция больше 0, чтобы записать тренировку в прогресс.");
+    const time = parseTime(prompt("Фактическое время, мм:сс или ч:мм:сс:", "") || "");
+    if (!time) return alert("Укажи время в формате 28:30 или 1:02:15.");
+    const hr = numOrNull(prompt("Средний пульс (можно пусто):", p.hr ? parseInt(p.hr) || "" : ""));
+    const hrMax = numOrNull(prompt("Макс. пульс (можно пусто):", ""));
+    const cad = numOrNull(prompt("Каденс, шаг/мин (можно пусто):", p.cad ? parseInt(p.cad) || "" : ""));
+    const vo2raw = prompt("VO2, мл/кг/мин (можно пусто):", "");
+    const vo2 = vo2raw && !isNaN(parseFloat(vo2raw)) ? parseFloat(vo2raw) : null;
+    runs.push({
+      id: uid(), planId: p.id, date: localDate(new Date()), type: p.type,
+      dist, time, hr, hrMax, cad, vo2, note: p.desc || ""
+    });
+    store.set("runs", runs);
+    p.done = true;
+  } else {
+    // Отмена: убираем связанную запись из прогресса
+    runs = runs.filter(r => r.planId !== id);
+    store.set("runs", runs);
+    p.done = false;
+  }
+  store.set("plan", plan);
+  renderCoach(); renderJournal(); renderProgress();
+};
+window.delPlan = id => {
+  plan = plan.filter(x => x.id !== id); store.set("plan", plan);
+  renderCoach(); renderJournal();
+};
+
+// ---------- Журнал (неделя) ----------
+function renderJournal() {
+  const planned = plan.length;
+  const done = plan.filter(p => p.done).length;
+  const plannedKm = plan.reduce((s, p) => s + (+p.dist || 0), 0);
+  const doneKm = plan.filter(p => p.done).reduce((s, p) => s + (+p.dist || 0), 0);
+  $("week-stats").innerHTML = [
+    statBox("Запланировано", planned),
+    statBox("Выполнено", `${done} / ${planned}`),
+    statBox("Км по плану", plannedKm.toFixed(1)),
+    statBox("Км выполнено", doneKm.toFixed(1))
+  ].join("");
+
+  let html = "<h2>Тренировки на неделю</h2>";
+  if (!plan.length) html += "<p class='muted'>На этой неделе тренировок нет. Добавь их во вкладках слева.</p>";
+  DAYS.forEach((name, i) => {
+    const items = sortPlan(plan.filter(p => +p.day === i));
+    if (!items.length) return;
+    html += `<div class="day-title"><span>${name}</span></div>` + items.map(planItem).join("");
+  });
+  $("journal-list").innerHTML = html;
+}
+$("p-clear").onclick = () => {
+  if (confirm("Очистить весь план на неделю?")) { plan = []; store.set("plan", plan); renderJournal(); renderCoach(); }
+};
+
+// ---------- Прогресс ----------
+function parseTime(s) {
+  const parts = String(s).trim().split(":").map(Number);
+  if (parts.some(isNaN) || parts.length < 2 || parts.length > 3) return null;
+  return parts.length === 2 ? parts[0]*60 + parts[1] : parts[0]*3600 + parts[1]*60 + parts[2];
+}
+function fmtTime(sec) {
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = Math.round(sec%60);
+  return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+function fmtPace(secPerKm) {
+  if (!isFinite(secPerKm) || secPerKm <= 0) return "—";
+  let m = Math.floor(secPerKm/60), s = Math.round(secPerKm%60);
+  if (s === 60) { m++; s = 0; }
+  return `${m}:${pad(s)}`;
+}
+const paceOf = r => r.time / r.dist;
+
+function statBox(k, v, cls = "") {
+  return `<div class="stat-box"><div class="k">${k}</div><div class="v ${cls}">${v}</div></div>`;
+}
+
+function renderBars(container, values, opts) {
+  if (!values.length) { container.innerHTML = "<p class='muted'>Нет данных</p>"; return; }
+  const nums = values.filter(v => v.value != null).map(v => v.value);
+  const max = Math.max(...nums), min = Math.min(...nums);
+  const base = opts.invert ? min : min * 0.9; // база для шкалы
+  const range = (opts.invert ? max - min : max - base) || 1;
+  container.innerHTML = values.map(v => {
+    if (v.value == null) {
+      return `<div class="col"><span class="val">—</span><div class="bar" style="height:6px;opacity:.2"></div><small>${v.label}</small></div>`;
+    }
+    const h = opts.invert
+      ? 30 + ((max - v.value) / range) * 110
+      : 30 + ((v.value - base) / range) * 110;
+    return `<div class="col"><span class="val">${opts.fmt(v.value)}</span>
+      <div class="bar ${opts.cls || ""}" style="height:${h}px"></div>
+      <small>${v.label}</small></div>`;
+  }).join("");
+}
+
+function renderProgress() {
+  const byDate = [...runs].sort((a, b) => a.date.localeCompare(b.date));
+  const last5 = byDate.slice(-5);
+  const withHr = runs.filter(r => r.hr), withCad = runs.filter(r => r.cad), withVo2 = runs.filter(r => r.vo2);
+  const hrMaxs = runs.map(r => r.hrMax).filter(Boolean);
+
+  $("prog-stats").innerHTML = [
+    statBox("Пробежек", runs.length),
+    statBox("Всего км", runs.reduce((s, r) => s + r.dist, 0).toFixed(1)),
+    statBox("Лучший темп", runs.length ? fmtPace(Math.min(...runs.map(paceOf))) : "—"),
+    statBox("Темп, последние 5", last5.length ? fmtPace(avg(last5.map(paceOf))) : "—"),
+    statBox("Средний пульс", withHr.length ? Math.round(avg(withHr.map(r => +r.hr))) : "—", "hr"),
+    statBox("Макс. пульс", hrMaxs.length ? Math.max(...hrMaxs) : "—", "hr"),
+    statBox("Средний каденс", withCad.length ? Math.round(avg(withCad.map(r => +r.cad))) : "—", "cad"),
+    statBox("Средний VO2", withVo2.length ? avg(withVo2.map(r => +r.vo2)).toFixed(1) : "—", "vo2")
+  ].join("");
+
+  const last10 = byDate.slice(-10);
+  renderBars($("ch-pace"), last10.map(r => ({ label: r.date.slice(5), value: paceOf(r) })),
+    { invert: true, fmt: fmtPace });
+  renderBars($("ch-hr"), last10.map(r => ({ label: r.date.slice(5), value: r.hr || null })),
+    { fmt: v => Math.round(v), cls: "hr" });
+  renderBars($("ch-cad"), last10.map(r => ({ label: r.date.slice(5), value: r.cad || null })),
+    { fmt: v => Math.round(v), cls: "cad" });
+  renderBars($("ch-vo2"), last10.map(r => ({ label: r.date.slice(5), value: r.vo2 ? +r.vo2 : null })),
+    { fmt: v => v.toFixed(1), cls: "vo2" });
+
+  const rows = [...runs].sort((a, b) => b.date.localeCompare(a.date)).map(r => `<tr>
+    <td>${r.date}</td><td>${r.dist}</td><td>${fmtTime(r.time)}</td>
+    <td class="pace">${fmtPace(paceOf(r))}</td>
+    <td class="hr">${r.hr ?? "—"}</td><td class="hr">${r.hrMax ?? "—"}</td>
+    <td class="cad">${r.cad ?? "—"}</td><td class="vo2">${r.vo2 ?? "—"}</td>
+    <td>${esc(r.note)}</td>
+    <td><button class="btn small danger" onclick="delRun('${r.id}')">✕</button></td></tr>`).join("");
+  $("runs-table").innerHTML = runs.length ? `<table>
+    <thead><tr><th>Дата</th><th>Км</th><th>Время</th><th>Темп /км</th><th>Пульс ср.</th><th>Пульс макс.</th>
+    <th>Каденс</th><th>VO2</th><th>Заметки</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table>` : "<p class='muted'>Пробежек пока нет. Добавь первую выше.</p>";
+}
+window.delRun = id => { runs = runs.filter(r => r.id !== id); store.set("runs", runs); renderProgress(); };
+
+// ---------- Настройки ----------
+function applySettings() {
+  let mode = settings.theme;
+  if (mode === "system") mode = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  document.body.classList.toggle("light", mode === "light");
+  document.body.classList.toggle("has-photo", !!settings.bg);
+  const root = document.documentElement.style;
+  root.setProperty("--accent", settings.accent);
+  root.setProperty("--bg-overlay", settings.overlay);
+  root.setProperty("--font", settings.font);
+  root.setProperty("--fw", settings.bold ? "700" : "400");
+  root.setProperty("--photo", settings.bg ? `url(${settings.bg})` : "none");
+  $("set-theme").value = settings.theme;
+  $("set-font").value = settings.font;
+  $("set-bold").checked = !!settings.bold;
+  $("set-overlay").value = settings.overlay;
+  $("ov-val").textContent = Math.round(settings.overlay * 100) + "%";
+  $("swatches").innerHTML = ACCENTS.map(c =>
+    `<div class="swatch ${c === settings.accent ? "on" : ""}" style="background:${c}" onclick="setAccent('${c}')"></div>`).join("");
+}
+function saveSettings() { store.set("settings", settings); applySettings(); }
+window.setAccent = c => { settings.accent = c; saveSettings(); };
+$("set-theme").onchange = e => { settings.theme = e.target.value; saveSettings(); };
+$("set-font").onchange = e => { settings.font = e.target.value; saveSettings(); };
+$("set-bold").onchange = e => { settings.bold = e.target.checked; saveSettings(); };
+$("set-overlay").oninput = e => { settings.overlay = +e.target.value; saveSettings(); };
+matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (settings.theme === "system") applySettings(); });
+$("set-bg").onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    const scale = Math.min(1, 1920 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = img.width * scale; c.height = img.height * scale;
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    settings.bg = c.toDataURL("image/jpeg", 0.85);
+    try { saveSettings(); } catch { alert("Фото слишком большое для хранения. Выбери другое."); }
+  };
+  img.src = URL.createObjectURL(file);
+};
+$("bg-remove").onclick = () => { settings.bg = null; saveSettings(); };
+
+// ---------- Напоминания ----------
+let bannerTimer = null;
+function showBanner(text) {
+  const b = $("banner");
+  b.textContent = text; b.style.display = "block";
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => b.style.display = "none", 15000);
+}
+$("notif-perm").onclick = async () => {
+  if (!("Notification" in window)) return alert("Браузер не поддерживает уведомления.");
+  const res = await Notification.requestPermission();
+  alert(res === "granted" ? "Уведомления включены!" : "Уведомления не разрешены. Напоминания будут показываться внутри страницы.");
+};
+function checkReminders() {
+  const now = new Date();
+  const hhmm = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const today = localDate(now);
+  const dayIdx = (now.getDay() + 6) % 7; // Пн = 0
+  let changed = false;
+  plan.forEach(p => {
+    if (+p.day === dayIdx && p.remind === hhmm && !p.done && p.notified !== today) {
+      p.notified = today; changed = true;
+      const text = `${p.type}${p.dist ? ", " + p.dist + " км" : ""}${p.pace ? ", темп " + p.pace : ""}${p.hr ? ", пульс " + p.hr : ""}`;
+      showBanner("⏰ " + text);
+      if ("Notification" in window && Notification.permission === "granted") new Notification("СвятБег", { body: text });
+    }
+  });
+  if (changed) store.set("plan", plan);
+}
+setInterval(checkReminders, 30000);
+
+// ---------- Данные ----------
+$("export").onclick = () => {
+  const blob = new Blob([JSON.stringify({ plan, runs, settings }, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "svyatbeg.json";
+  a.click();
+};
+$("reset-all").onclick = () => {
+  if (confirm("Удалить все данные и настройки?")) { localStorage.clear(); location.reload(); }
+};
+
+// ---------- Старт ----------
+applySettings();
+showView("journal");
+checkReminders();
+</script>
+<script src="import.js"></script>
+</body>
+</html>
